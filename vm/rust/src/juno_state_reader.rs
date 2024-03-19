@@ -59,7 +59,7 @@ impl JunoStateReader {
 impl StateReader for JunoStateReader {
     fn get_storage_at(
         &mut self,
-        contract_address: ContractAddress,
+        contract_address: starknet_api::core::ContractAddress,
         key: StorageKey,
     ) -> StateResult<StarkFelt> {
         let addr = felt_to_byte_array(contract_address.0.key());
@@ -82,7 +82,7 @@ impl StateReader for JunoStateReader {
 
     /// Returns the nonce of the given contract instance.
     /// Default: 0 for an uninitialized contract address.
-    fn get_nonce_at(&mut self, contract_address: ContractAddress) -> StateResult<Nonce> {
+    fn get_nonce_at(&mut self, contract_address: starknet_api::core::ContractAddress) -> StateResult<Nonce> {
         let addr = felt_to_byte_array(contract_address.0.key());
         let ptr = unsafe { JunoStateGetNonceAt(self.handle, addr.as_ptr()) };
         if ptr.is_null() {
@@ -99,7 +99,7 @@ impl StateReader for JunoStateReader {
 
     /// Returns the class hash of the contract class at the given contract instance.
     /// Default: 0 (uninitialized class hash) for an uninitialized contract address.
-    fn get_class_hash_at(&mut self, contract_address: ContractAddress) -> StateResult<ClassHash> {
+    fn get_class_hash_at(&mut self, contract_address: starknet_api::core::ContractAddress) -> StateResult<ClassHash> {
         let addr = felt_to_byte_array(contract_address.0.key());
         let ptr = unsafe { JunoStateGetClassHashAt(self.handle, addr.as_ptr()) };
         if ptr.is_null() {
@@ -118,7 +118,7 @@ impl StateReader for JunoStateReader {
     /// Returns the contract class of the given class hash.
     fn get_compiled_contract_class(
         &mut self,
-        class_hash: ClassHash,
+        class_hash: starknet_api::core::ClassHash,
     ) -> StateResult<ContractClass> {
         if let Some(cached_class) = CLASS_CACHE.lock().unwrap().cache_get(&class_hash) {
             // skip the cache if it comes from a height higher than ours. Class might be undefined on the height
@@ -169,7 +169,7 @@ impl StateReader for JunoStateReader {
     /// Returns the compiled class hash of the given class hash.
     fn get_compiled_class_hash(
         &mut self,
-        _class_hash: ClassHash,
+        _class_hash: starknet_api::core::ClassHash,
     ) -> StateResult<CompiledClassHash> {
         unimplemented!()
     }
