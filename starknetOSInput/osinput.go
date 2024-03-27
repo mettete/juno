@@ -21,9 +21,9 @@ type StarknetOsInput struct {
 	// Todo ??
 	CompiledClassVisitedPcs map[felt.Felt][]felt.Felt `json:"compiled_class_visited_pcs"`
 
-	// Mapping from contract address to ContractState
 	Contracts map[felt.Felt]ContractState `json:"contracts"`
 
+	// Mapping from contract trie class_hash to class trie compiled_class_hash
 	ClassHashToCompiledClassHash map[felt.Felt]felt.Felt `json:"class_hash_to_compiled_class_hash"`
 
 	// Fixed Starknet Config
