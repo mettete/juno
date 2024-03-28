@@ -37,6 +37,8 @@ type StarknetOsInput struct {
 }
 
 // ref: https://github.com/starkware-libs/cairo-lang/blob/master/src/starkware/starknet/storage/starknet_storage.py#L29
+// Context: When updating a trie (class trie, contract trie), we keep track
+// of the nodes, and thier (length,path,value) values, that change.
 type CommitmentInfo struct {
 	PreviousRoot    felt.Felt                 `json:"previous_root"`
 	UpdatedRoot     felt.Felt                 `json:"updated_root"`

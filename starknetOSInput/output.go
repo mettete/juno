@@ -12,6 +12,8 @@ import (
 func PopulateOSInput(block core.Block, handler *rpc.Handler) (*StarknetOsInput, error) {
 	osinput := &StarknetOsInput{}
 
+	// Todo: commitment info
+
 	// populate transactions, deprecrated classes, and classes
 	for _, tx := range block.Transactions {
 		osinput.Transactions = append(osinput.Transactions, tx)
@@ -23,14 +25,16 @@ func PopulateOSInput(block core.Block, handler *rpc.Handler) (*StarknetOsInput, 
 				return nil, errors.New(err.Message) // Todo: hanlde error correctly
 			}
 			if class.Program != "" {
-				depCompClass := AdaptClassToDeprecatedCompileClass(class)
+				depCompClass := AdaptClassToDeprecatedCompiledClass(class)
 				osinput.DeprecatedCompiledClasses[*decTxn.ClassHash] = depCompClass
 			} else {
-				compClass := AdaptClassToCompileClass(class)
+				compClass := AdaptClassToCompiledClass(class)
 				osinput.CompiledClasses[*decTxn.ClassHash] = compClass
 			}
 		}
 	}
+
+	// Todo: CompiledClassVisitedPcs, Contracts
 
 	osinput.GeneralConfig = loadExampleStarknetOSConfig()
 
@@ -38,11 +42,11 @@ func PopulateOSInput(block core.Block, handler *rpc.Handler) (*StarknetOsInput, 
 	return osinput, nil
 }
 
-func AdaptClassToDeprecatedCompileClass(class *rpc.Class) core.Cairo0Class {
+func AdaptClassToDeprecatedCompiledClass(class *rpc.Class) core.Cairo0Class {
 	panic("Todo")
 	return core.Cairo0Class{}
 }
-func AdaptClassToCompileClass(class *rpc.Class) core.CompiledClass {
+func AdaptClassToCompiledClass(class *rpc.Class) core.CompiledClass {
 	panic("Todo")
 	return core.CompiledClass{}
 }
