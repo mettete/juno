@@ -34,6 +34,11 @@ func PopulateOSInput(block core.Block, handler *rpc.Handler) (*StarknetOsInput, 
 		}
 	}
 
+	// Todo: ClassHashToCompiledClassHash
+	txnBasedContractData := getContractDataThatTxsUse(handler, osinput.Transactions)
+	classHashToCompiledClassHash := getClassHashToCompiledClassHash(handler, txnBasedContractData)
+	osinput.ClassHashToCompiledClassHash = classHashToCompiledClassHash
+
 	// Todo: CompiledClassVisitedPcs, Contracts
 
 	osinput.GeneralConfig = loadExampleStarknetOSConfig()
@@ -78,4 +83,17 @@ func loadExampleStarknetOSConfig() StarknetGeneralConfig {
 		EnforceL1HandlerFee: true,
 		UseKzgDa:            false,
 	}
+}
+
+// Todo: using handler as proxy for state access
+func getContractDataThatTxsUse(handler *rpc.Handler, txs []core.Transaction) []felt.Felt {
+	// Todo: Given a set of transactions, and acess to contract-trie,
+	// return the set of contract addresses (and contract class hashes)
+	panic("unimplemented")
+}
+
+// Todo: using handler as proxy for state access
+func getClassHashToCompiledClassHash(handler *rpc.Handler, classHashes []felt.Felt) map[felt.Felt]felt.Felt {
+	// Todo: Given access to the class trie, and a set of classhashes, return the associated compiled class hashes
+	panic("unimplemented")
 }

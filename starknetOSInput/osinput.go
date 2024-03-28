@@ -23,7 +23,7 @@ type StarknetOsInput struct {
 
 	Contracts map[felt.Felt]ContractState `json:"contracts"`
 
-	// Mapping from contract trie class_hash to class trie compiled_class_hash
+	// Mapping from contract-tries class_hash to class-tries compiled_class_hash
 	ClassHashToCompiledClassHash map[felt.Felt]felt.Felt `json:"class_hash_to_compiled_class_hash"`
 
 	// Fixed Starknet Config
