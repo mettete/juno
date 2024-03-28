@@ -12,7 +12,13 @@ import (
 func PopulateOSInput(block core.Block, handler *rpc.Handler) (*StarknetOsInput, error) {
 	osinput := &StarknetOsInput{}
 
+	contractAddresses := getContractDataThatTxsUse(handler, osinput.Transactions)
+
 	// Todo: commitment info
+	contractStateCommitmentInfo := getContractStateCommitmentInfo()
+	classStateCommitmentInfo := getClassStateCommitmentInfo()
+	osinput.ContractStateCommitmentInfo = contractStateCommitmentInfo
+	osinput.ContractClassCommitmentInfo = classStateCommitmentInfo
 
 	// populate transactions, deprecrated classes, and classes
 	for _, tx := range block.Transactions {
@@ -35,11 +41,14 @@ func PopulateOSInput(block core.Block, handler *rpc.Handler) (*StarknetOsInput, 
 	}
 
 	// Todo: ClassHashToCompiledClassHash
-	txnBasedContractData := getContractDataThatTxsUse(handler, osinput.Transactions)
-	classHashToCompiledClassHash := getClassHashToCompiledClassHash(handler, txnBasedContractData)
+	classHashToCompiledClassHash := getClassHashToCompiledClassHash(handler, contractAddresses)
 	osinput.ClassHashToCompiledClassHash = classHashToCompiledClassHash
 
-	// Todo: CompiledClassVisitedPcs, Contracts
+	// Todo: CompiledClassVisitedPcs??
+
+	// Todo: contracts
+	contracts := getContracts(contractAddresses)
+	osinput.Contracts = contracts
 
 	osinput.GeneralConfig = loadExampleStarknetOSConfig()
 
@@ -49,11 +58,9 @@ func PopulateOSInput(block core.Block, handler *rpc.Handler) (*StarknetOsInput, 
 
 func AdaptClassToDeprecatedCompiledClass(class *rpc.Class) core.Cairo0Class {
 	panic("Todo")
-	return core.Cairo0Class{}
 }
 func AdaptClassToCompiledClass(class *rpc.Class) core.CompiledClass {
 	panic("Todo")
-	return core.CompiledClass{}
 }
 
 func loadExampleStarknetOSConfig() StarknetGeneralConfig {
@@ -95,5 +102,27 @@ func getContractDataThatTxsUse(handler *rpc.Handler, txs []core.Transaction) []f
 // Todo: using handler as proxy for state access
 func getClassHashToCompiledClassHash(handler *rpc.Handler, classHashes []felt.Felt) map[felt.Felt]felt.Felt {
 	// Todo: Given access to the class trie, and a set of classhashes, return the associated compiled class hashes
+	panic("unimplemented")
+}
+
+func getContractStateCommitmentInfo() CommitmentInfo {
+
+	// Todo: Given the old and new contract Trie, collect all the
+	// nodes that were modified
+
+	panic("unimplemented")
+}
+
+func getClassStateCommitmentInfo() CommitmentInfo {
+
+	// Todo: Given the old and new class Trie, collect all the
+	// nodes that were modified
+
+	panic("unimplemented")
+}
+
+func getContracts(contractAddresses []felt.Felt) map[felt.Felt]ContractState {
+	// Todo: given a batch of transactions, collect the set of ContractState's
+	// for every contract that the contract touched
 	panic("unimplemented")
 }

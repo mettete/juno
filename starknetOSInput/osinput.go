@@ -10,7 +10,7 @@ import (
 // starknet ref: https://github.com/starkware-libs/cairo-lang/blob/master/src/starkware/starknet/core/os/os_input.py#L29
 // snos ref: https://github.com/keep-starknet-strange/snos/blob/main/src/io/input.rs#L18
 type StarknetOsInput struct {
-	// Todo: ??
+	// Todo: Set of nodes that are changed in the contract/class trie from updating state?
 	ContractStateCommitmentInfo CommitmentInfo `json:"contract_state_commitment_info"`
 	ContractClassCommitmentInfo CommitmentInfo `json:"contract_class_commitment_info"`
 
@@ -21,6 +21,7 @@ type StarknetOsInput struct {
 	// Todo ??
 	CompiledClassVisitedPcs map[felt.Felt][]felt.Felt `json:"compiled_class_visited_pcs"`
 
+	// Contract data associated with every contract that the batch of transactions require
 	Contracts map[felt.Felt]ContractState `json:"contracts"`
 
 	// Mapping from contract-tries class_hash to class-tries compiled_class_hash
