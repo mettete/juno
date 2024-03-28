@@ -12,6 +12,7 @@ import (
 func PopulateOSInput(block core.Block, handler *rpc.Handler) (*StarknetOsInput, error) {
 	osinput := &StarknetOsInput{}
 
+	// Todo
 	contractAddresses := getContractDataThatTxsUse(handler, osinput.Transactions)
 
 	// Todo: commitment info
@@ -96,6 +97,7 @@ func loadExampleStarknetOSConfig() StarknetGeneralConfig {
 func getContractDataThatTxsUse(handler *rpc.Handler, txs []core.Transaction) []felt.Felt {
 	// Todo: Given a set of transactions, and acess to contract-trie,
 	// return the set of contract addresses (and contract class hashes)
+	// Note: cairol-lang uses get_state_selector() to return subset of Merkle Trie the txn affects
 	panic("unimplemented")
 }
 
