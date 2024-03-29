@@ -17,6 +17,7 @@ type StateSelector struct {
 	ClassHashes       []felt.Felt
 }
 
+// ref: https://github.com/starkware-libs/cairo-lang/blob/v0.12.3/src/starkware/starknet/business_logic/transaction/state_objects.py#L37
 func get_state_selector_transactions(txns []*core.Transaction, generalConfig *StarknetGeneralConfig) (*StateSelector, error) {
 
 	contractAddresses := []felt.Felt{}
@@ -27,13 +28,9 @@ func get_state_selector_transactions(txns []*core.Transaction, generalConfig *St
 		if err != nil {
 			return nil, err
 		}
+		contractAddresses = append(contractAddresses, stateSelector.ContractAddresses...)
+		classHashes = append(classHashes, stateSelector.ClassHashes...)
 
-		for _, addr := range stateSelector.ContractAddresses {
-			contractAddresses = append(contractAddresses, addr)
-		}
-		for _, hash := range stateSelector.ClassHashes {
-			classHashes = append(classHashes, hash)
-		}
 	}
 	return &StateSelector{
 		ContractAddresses: contractAddresses,
@@ -62,8 +59,7 @@ func get_state_selector_transaction(txn *core.Transaction, generalConfig *Starkn
 
 // ref: https://github.com/starkware-libs/cairo-lang/blob/v0.12.3/src/starkware/starknet/business_logic/transaction/objects.py#L1421
 func get_state_selector_invoke(txn *core.InvokeTransaction, config *StarknetGeneralConfig) (*StateSelector, error) {
-	contractAddresses := []felt.Felt{}
-	contractAddresses = append(contractAddresses, *txn.SenderAddress)
+	contractAddresses := []felt.Felt{*txn.SenderAddress}
 
 	if !txn.MaxFee.IsZero() {
 		contractAddresses = append(contractAddresses, config.StarknetOsConfig.FeeTokenAddress)
@@ -72,5 +68,41 @@ func get_state_selector_invoke(txn *core.InvokeTransaction, config *StarknetGene
 	return &StateSelector{
 		ContractAddresses: contractAddresses,
 		ClassHashes:       nil,
+	}, nil
+}
+
+// ref: https://github.com/starkware-libs/cairo-lang/blob/v0.12.3/src/starkware/starknet/business_logic/transaction/objects.py#L1094
+func get_state_selector_deploy(txn *core.DeployTransaction, generalConfig *StarknetGeneralConfig) (*StateSelector, error) {
+	return &StateSelector{
+		ContractAddresses: []felt.Felt{*txn.ContractAddress},
+		ClassHashes:       []felt.Felt{},
+	}, nil
+}
+
+// ref: https://github.com/starkware-libs/cairo-lang/blob/v0.12.3/src/starkware/starknet/business_logic/transaction/objects.py#L665-L671
+func get_state_selector_declare(txn *core.DeclareTransaction, generalConfig *StarknetGeneralConfig) (*StateSelector, error) {
+	if txn.Version.Is(0) {
+		return &StateSelector{}, nil
+	}
+
+	return &StateSelector{
+		ContractAddresses: []felt.Felt{*txn.SenderAddress},
+		ClassHashes:       []felt.Felt{*txn.ClassHash},
+	}, nil
+}
+
+// ref: https://github.com/starkware-libs/cairo-lang/blob/v0.12.3/src/starkware/starknet/business_logic/transaction/objects.py#L1611
+func get_state_selector_l1handler(txn *core.L1HandlerTransaction, generalConfig *StarknetGeneralConfig) (*StateSelector, error) {
+	return &StateSelector{
+		ContractAddresses: []felt.Felt{*txn.ContractAddress},
+		ClassHashes:       []felt.Felt{},
+	}, nil
+}
+
+// ref: https://github.com/starkware-libs/cairo-lang/blob/v0.12.3/src/starkware/starknet/business_logic/transaction/objects.py#L856
+func get_state_selector_deploy_account(txn *core.DeployAccountTransaction, generalConfig *StarknetGeneralConfig) (*StateSelector, error) {
+	return &StateSelector{
+		ContractAddresses: []felt.Felt{*txn.ContractAddress},
+		ClassHashes:       []felt.Felt{*txn.ClassHash},
 	}, nil
 }
