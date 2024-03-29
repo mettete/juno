@@ -26,9 +26,10 @@ type ResultPageRequest struct {
 	ChunkSize         uint64 `json:"chunk_size" validate:"min=1"`
 }
 
-type EventsChunk struct {
-	Events            []*EmittedEvent `json:"events"`
-	ContinuationToken string          `json:"continuation_token,omitempty"`
+type Event struct {
+	From *felt.Felt   `json:"from_address,omitempty"`
+	Keys []*felt.Felt `json:"keys"`
+	Data []*felt.Felt `json:"data"`
 }
 
 type EmittedEvent struct {
@@ -36,6 +37,11 @@ type EmittedEvent struct {
 	BlockNumber     *uint64    `json:"block_number,omitempty"`
 	BlockHash       *felt.Felt `json:"block_hash,omitempty"`
 	TransactionHash *felt.Felt `json:"transaction_hash"`
+}
+
+type EventsChunk struct {
+	Events            []*EmittedEvent `json:"events"`
+	ContinuationToken string          `json:"continuation_token,omitempty"`
 }
 
 /****************************************************

@@ -68,24 +68,6 @@ func (t *TransactionType) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type FeeUnit byte
-
-const (
-	WEI FeeUnit = iota
-	FRI
-)
-
-func (u FeeUnit) MarshalText() ([]byte, error) {
-	switch u {
-	case WEI:
-		return []byte("WEI"), nil
-	case FRI:
-		return []byte("FRI"), nil
-	default:
-		return nil, fmt.Errorf("unknown FeeUnit %v", u)
-	}
-}
-
 type TxnStatus uint8
 
 const (
@@ -262,12 +244,6 @@ type MsgToL1 struct {
 	Payload []*felt.Felt   `json:"payload"`
 }
 
-type Event struct {
-	From *felt.Felt   `json:"from_address,omitempty"`
-	Keys []*felt.Felt `json:"keys"`
-	Data []*felt.Felt `json:"data"`
-}
-
 type ComputationResources struct {
 	Steps        uint64 `json:"steps"`
 	MemoryHoles  uint64 `json:"memory_holes,omitempty"`
@@ -325,39 +301,6 @@ type BroadcastedTransaction struct {
 	ContractClass json.RawMessage `json:"contract_class,omitempty" validate:"required_if=Transaction.Type DECLARE"`
 	PaidFeeOnL1   *felt.Felt      `json:"paid_fee_on_l1,omitempty" validate:"required_if=Transaction.Type L1_HANDLER"`
 }
-
-type FeeEstimate struct {
-	GasConsumed     *felt.Felt `json:"gas_consumed"`
-	GasPrice        *felt.Felt `json:"gas_price"`
-	DataGasConsumed *felt.Felt `json:"data_gas_consumed"`
-	DataGasPrice    *felt.Felt `json:"data_gas_price"`
-	OverallFee      *felt.Felt `json:"overall_fee"`
-	Unit            *FeeUnit   `json:"unit,omitempty"`
-	// pre 13.1 response
-	v0_6Response bool
-}
-
-func (f FeeEstimate) MarshalJSON() ([]byte, error) {
-	if f.v0_6Response {
-		return json.Marshal(struct {
-			GasConsumed *felt.Felt `json:"gas_consumed"`
-			GasPrice    *felt.Felt `json:"gas_price"`
-			OverallFee  *felt.Felt `json:"overall_fee"`
-			Unit        *FeeUnit   `json:"unit,omitempty"`
-		}{
-			GasConsumed: f.GasConsumed,
-			GasPrice:    f.GasPrice,
-			OverallFee:  f.OverallFee,
-			Unit:        f.Unit,
-		})
-	} else {
-		type alias FeeEstimate // avoid infinite recursion
-		return json.Marshal(alias(f))
-	}
-}
-
-// Dirty hack for testing
-func (f *FeeEstimate) FromV0_6() { f.v0_6Response = true }
 
 func adaptBroadcastedTransaction(broadcastedTxn *BroadcastedTransaction,
 	network *utils.Network,

@@ -1,12 +1,65 @@
 package rpc
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/juno/jsonrpc"
 	"github.com/NethermindEth/juno/utils"
 )
+
+type FeeUnit byte
+
+const (
+	WEI FeeUnit = iota
+	FRI
+)
+
+func (u FeeUnit) MarshalText() ([]byte, error) {
+	switch u {
+	case WEI:
+		return []byte("WEI"), nil
+	case FRI:
+		return []byte("FRI"), nil
+	default:
+		return nil, fmt.Errorf("unknown FeeUnit %v", u)
+	}
+}
+
+type FeeEstimate struct {
+	GasConsumed     *felt.Felt `json:"gas_consumed"`
+	GasPrice        *felt.Felt `json:"gas_price"`
+	DataGasConsumed *felt.Felt `json:"data_gas_consumed"`
+	DataGasPrice    *felt.Felt `json:"data_gas_price"`
+	OverallFee      *felt.Felt `json:"overall_fee"`
+	Unit            *FeeUnit   `json:"unit,omitempty"`
+	// pre 13.1 response
+	v0_6Response bool
+}
+
+func (f FeeEstimate) MarshalJSON() ([]byte, error) {
+	if f.v0_6Response {
+		return json.Marshal(struct {
+			GasConsumed *felt.Felt `json:"gas_consumed"`
+			GasPrice    *felt.Felt `json:"gas_price"`
+			OverallFee  *felt.Felt `json:"overall_fee"`
+			Unit        *FeeUnit   `json:"unit,omitempty"`
+		}{
+			GasConsumed: f.GasConsumed,
+			GasPrice:    f.GasPrice,
+			OverallFee:  f.OverallFee,
+			Unit:        f.Unit,
+		})
+	} else {
+		type alias FeeEstimate // avoid infinite recursion
+		return json.Marshal(alias(f))
+	}
+}
+
+// Dirty hack for testing
+func (f *FeeEstimate) FromV0_6() { f.v0_6Response = true }
 
 /****************************************************
 		Estimate Fee Handlers
