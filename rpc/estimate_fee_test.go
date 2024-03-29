@@ -80,14 +80,21 @@ func TestEstimateMessageFee(t *testing.T) {
 	estimateFee, err := handler.EstimateMessageFeeV0_6(msg, rpc.BlockID{Latest: true})
 	require.Nil(t, err)
 	feeUnit := rpc.WEI
+
+	// NOTE[Pawel]: we expect `v0_6Response == true` structure here, so we only compare fields
+	// that are relevant to this structure (GasConsumed, GasPrice, OverallFee, Unit).
+	// There is no way to set `v0_6Response` private field here and then use struct comparison.
 	expected := rpc.FeeEstimate{
 		GasConsumed: expectedGasConsumed,
 		GasPrice:    latestHeader.GasPrice,
 		OverallFee:  new(felt.Felt).Mul(expectedGasConsumed, latestHeader.GasPrice),
 		Unit:        &feeUnit,
 	}
-	expected.FromV0_6()
-	require.Equal(t, expected, *estimateFee)
+
+	require.Equal(t, expected.GasConsumed, estimateFee.GasConsumed)
+	require.Equal(t, expected.GasPrice, estimateFee.GasPrice)
+	require.Equal(t, expected.OverallFee, estimateFee.OverallFee)
+	require.Equal(t, expected.Unit, estimateFee.Unit)
 }
 
 func TestEstimateFee(t *testing.T) {

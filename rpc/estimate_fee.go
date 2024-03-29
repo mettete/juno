@@ -58,9 +58,6 @@ func (f FeeEstimate) MarshalJSON() ([]byte, error) {
 	}
 }
 
-// Dirty hack for testing
-func (f *FeeEstimate) FromV0_6() { f.v0_6Response = true }
-
 /****************************************************
 		Estimate Fee Handlers
 *****************************************************/
