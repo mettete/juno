@@ -9,11 +9,14 @@ import (
 )
 
 // Note: assumes the block and state have already been stored
-func PopulateOSInput(block core.Block, handler *rpc.Handler) (*StarknetOsInput, error) {
+func PopulateOSInput(block core.Block, handler *rpc.Handler, execInfo []TransactionExecutionInfo) (*StarknetOsInput, error) {
 	osinput := &StarknetOsInput{}
 
 	// Todo
-	contractAddresses := getContractDataThatTxsUse(handler, osinput.Transactions)
+	stateSelector, err := get_os_state_selector(osinput.Transactions, execInfo, &osinput.GeneralConfig)
+	if err != nil {
+		return nil, err
+	}
 
 	// Todo: commitment info
 	contractStateCommitmentInfo := getContractStateCommitmentInfo()
@@ -42,13 +45,13 @@ func PopulateOSInput(block core.Block, handler *rpc.Handler) (*StarknetOsInput, 
 	}
 
 	// Todo: ClassHashToCompiledClassHash
-	classHashToCompiledClassHash := getClassHashToCompiledClassHash(handler, contractAddresses)
+	classHashToCompiledClassHash := getClassHashToCompiledClassHash(handler, stateSelector.ContractAddresses)
 	osinput.ClassHashToCompiledClassHash = classHashToCompiledClassHash
 
 	// Todo: CompiledClassVisitedPcs??
 
 	// Todo: contracts
-	contracts := getContracts(contractAddresses)
+	contracts := getContracts(stateSelector.ContractAddresses)
 	osinput.Contracts = contracts
 
 	osinput.GeneralConfig = loadExampleStarknetOSConfig()
@@ -91,14 +94,6 @@ func loadExampleStarknetOSConfig() StarknetGeneralConfig {
 		EnforceL1HandlerFee: true,
 		UseKzgDa:            false,
 	}
-}
-
-// Todo: using handler as proxy for state access
-func getContractDataThatTxsUse(handler *rpc.Handler, txs []core.Transaction) []felt.Felt {
-	// Todo: Given a set of transactions, and acess to contract-trie,
-	// return the set of contract addresses (and contract class hashes)
-	// Note: cairol-lang uses get_state_selector() to return subset of Merkle Trie the txn affects
-	panic("unimplemented")
 }
 
 // Todo: using handler as proxy for state access

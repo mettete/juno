@@ -28,6 +28,7 @@ func (s *StateSelector) union(other *StateSelector) *StateSelector {
 	}
 }
 
+// Todo: fix, this is not the correct way to do this
 func (s *StateSelector) deleteContractAddress(address felt.Felt) {
 	for i, a := range s.ContractAddresses {
 		if a == address {
@@ -93,6 +94,27 @@ type OrderedL2ToL1Message struct {
 	Order     int
 	ToAddress int64
 	Payload   []int64
+}
+
+func get_os_state_selector(
+	txns []core.Transaction,
+	executionInfos []TransactionExecutionInfo,
+	generalConfig *StarknetGeneralConfig) (*StateSelector, error) {
+	transactionStateSelector, err := get_state_selector_transactions(txns, generalConfig)
+	if err != nil {
+		return nil, err
+	}
+	executionStateSelector, err := get_state_seelctor_execution_info(executionInfos, generalConfig)
+	if err != nil {
+		return nil, err
+	}
+	// Include reserved contract addresses
+	reservedStateSelector := &StateSelector{
+		ContractAddresses: []felt.Felt{*new(felt.Felt).SetUint64(0), *new(felt.Felt).SetUint64(1)},
+		ClassHashes:       []felt.Felt{},
+	}
+	// return union
+	return transactionStateSelector.union(executionStateSelector).union(reservedStateSelector), nil
 }
 
 func get_state_seelctor_execution_info(executionInfos []TransactionExecutionInfo, generalConfig *StarknetGeneralConfig) (*StateSelector, error) {
@@ -170,13 +192,13 @@ func non_optional_calls(execInfo *TransactionExecutionInfo) []*CallInfo {
 }
 
 // ref: https://github.com/starkware-libs/cairo-lang/blob/v0.12.3/src/starkware/starknet/business_logic/transaction/state_objects.py#L37
-func get_state_selector_transactions(txns []*core.Transaction, generalConfig *StarknetGeneralConfig) (*StateSelector, error) {
+func get_state_selector_transactions(txns []core.Transaction, generalConfig *StarknetGeneralConfig) (*StateSelector, error) {
 
 	contractAddresses := []felt.Felt{}
 	classHashes := []felt.Felt{}
 
 	for _, txn := range txns {
-		stateSelector, err := get_state_selector_transaction(txn, generalConfig)
+		stateSelector, err := get_state_selector_transaction(&txn, generalConfig)
 		if err != nil {
 			return nil, err
 		}
