@@ -17,6 +17,26 @@ type StateSelector struct {
 	ContractAddresses []felt.Felt
 	ClassHashes       []felt.Felt
 }
+
+func (s *StateSelector) union(other *StateSelector) *StateSelector {
+	contractAddresses := append(s.ContractAddresses, other.ContractAddresses...)
+	classHashes := append(s.ClassHashes, other.ClassHashes...)
+
+	return &StateSelector{
+		ContractAddresses: contractAddresses,
+		ClassHashes:       classHashes,
+	}
+}
+
+func (s *StateSelector) deleteContractAddress(address felt.Felt) {
+	for i, a := range s.ContractAddresses {
+		if a == address {
+			s.ContractAddresses = append(s.ContractAddresses[:i], s.ContractAddresses[i+1:]...)
+			break
+		}
+	}
+}
+
 type TransactionExecutionInfo struct {
 	ValidateInfo    *CallInfo
 	CallInfo        *CallInfo
@@ -32,8 +52,8 @@ type ResourcesMapping map[string]int
 type CallInfo struct {
 	CallerAddress       int64
 	CallType            *CallType
-	ContractAddress     int64
-	ClassHash           *int64
+	ContractAddress     felt.Felt
+	ClassHash           *felt.Felt
 	EntryPointSelector  *int64
 	EntryPointType      *EntryPointType
 	Calldata            []int64
@@ -46,7 +66,7 @@ type CallInfo struct {
 	StorageReadValues   []int64
 	AccessedStorageKeys map[int64]struct{}
 	InternalCalls       []*CallInfo
-	CodeAddress         *int64
+	CodeAddress         *felt.Felt
 }
 type CallType int
 
@@ -75,8 +95,78 @@ type OrderedL2ToL1Message struct {
 	Payload   []int64
 }
 
-func get_state_seelctor_execution_info(executionInfo []TransactionExecutionInfo, generalConfig *StarknetGeneralConfig) (*StateSelector, error) {
-	panic("Not implemented")
+func get_state_seelctor_execution_info(executionInfos []TransactionExecutionInfo, generalConfig *StarknetGeneralConfig) (*StateSelector, error) {
+	contractAddresses := []felt.Felt{}
+	classHashes := []felt.Felt{}
+	for _, execInfo := range executionInfos {
+		stateSelector, err := get_state_selector_exec_info(&execInfo, generalConfig)
+		if err != nil {
+			return nil, err
+		}
+		contractAddresses = append(contractAddresses, stateSelector.ContractAddresses...)
+		classHashes = append(classHashes, stateSelector.ClassHashes...)
+	}
+	return &StateSelector{
+		ContractAddresses: contractAddresses,
+		ClassHashes:       classHashes,
+	}, nil
+}
+
+func get_state_selector_exec_info(execInfo *TransactionExecutionInfo, generalConfig *StarknetGeneralConfig) (*StateSelector, error) {
+	nonOptionalCalls := non_optional_calls(execInfo)
+	return get_state_selector_calls(nonOptionalCalls, generalConfig)
+}
+
+// ref: https://github.com/starkware-libs/cairo-lang/blob/v0.12.3/src/starkware/starknet/business_logic/execution/objects.py#L324
+func get_state_selector_calls(calls []*CallInfo, generalConfig *StarknetGeneralConfig) (*StateSelector, error) {
+	DEFAULT_DECLARE_SENDER_ADDRESS := new(felt.Felt).SetUint64(1)
+	combinedSelector := &StateSelector{
+		ContractAddresses: []felt.Felt{},
+		ClassHashes:       []felt.Felt{},
+	}
+
+	for _, call := range calls {
+		callAddress := call.ContractAddress
+		if call.CodeAddress != nil {
+			callAddress = *call.CodeAddress
+		}
+		if call.ClassHash == nil {
+			return nil, errors.New("Class hash is missing from call info")
+		}
+		callSelector := StateSelector{
+			ContractAddresses: []felt.Felt{call.ContractAddress, callAddress},
+			ClassHashes:       []felt.Felt{*call.ClassHash},
+		}
+		// Todo: make cleaner
+		callSelector.deleteContractAddress(*DEFAULT_DECLARE_SENDER_ADDRESS)
+
+		interalSelector, err := get_state_selector_calls(call.InternalCalls, generalConfig)
+		if err != nil {
+			return nil, err
+		}
+		combinedSelector = combinedSelector.union(&callSelector)
+		combinedSelector = combinedSelector.union(interalSelector)
+	}
+
+	return combinedSelector, nil
+}
+
+// ref: https://github.com/starkware-libs/cairo-lang/blob/v0.12.3/src/starkware/starknet/business_logic/execution/objects.py#L493
+func non_optional_calls(execInfo *TransactionExecutionInfo) []*CallInfo {
+	var orderedOptionalCalls []*CallInfo
+	if *execInfo.TxType == rpc.TxnDeployAccount {
+		orderedOptionalCalls = []*CallInfo{execInfo.CallInfo, execInfo.ValidateInfo, execInfo.FeeTransferInfo}
+	} else {
+		orderedOptionalCalls = []*CallInfo{execInfo.ValidateInfo, execInfo.CallInfo, execInfo.FeeTransferInfo}
+	}
+
+	var nonOptionalCalls []*CallInfo
+	for _, call := range orderedOptionalCalls {
+		if call != nil {
+			nonOptionalCalls = append(nonOptionalCalls, call)
+		}
+	}
+	return nonOptionalCalls
 }
 
 // ref: https://github.com/starkware-libs/cairo-lang/blob/v0.12.3/src/starkware/starknet/business_logic/transaction/state_objects.py#L37
