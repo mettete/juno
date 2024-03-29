@@ -5,6 +5,7 @@ import (
 
 	"github.com/NethermindEth/juno/core"
 	"github.com/NethermindEth/juno/core/felt"
+	"github.com/NethermindEth/juno/rpc"
 )
 
 // StateSelector contains the set of contract addresses and class hashes that a transaction
@@ -15,6 +16,67 @@ import (
 type StateSelector struct {
 	ContractAddresses []felt.Felt
 	ClassHashes       []felt.Felt
+}
+type TransactionExecutionInfo struct {
+	ValidateInfo    *CallInfo
+	CallInfo        *CallInfo
+	FeeTransferInfo *CallInfo
+	ActualFee       int64
+	ActualResources ResourcesMapping
+	TxType          *rpc.TransactionType
+	RevertError     *string
+}
+
+type ResourcesMapping map[string]int
+
+type CallInfo struct {
+	CallerAddress       int64
+	CallType            *CallType
+	ContractAddress     int64
+	ClassHash           *int64
+	EntryPointSelector  *int64
+	EntryPointType      *EntryPointType
+	Calldata            []int64
+	GasConsumed         int64
+	FailureFlag         int64
+	Retdata             []int64
+	ExecutionResources  core.ExecutionResources
+	Events              []OrderedEvent
+	L2ToL1Messages      []OrderedL2ToL1Message
+	StorageReadValues   []int64
+	AccessedStorageKeys map[int64]struct{}
+	InternalCalls       []*CallInfo
+	CodeAddress         *int64
+}
+type CallType int
+
+const (
+	Call CallType = iota
+	Delegate
+)
+
+type EntryPointType int
+
+const (
+	External EntryPointType = iota
+	L1Handler
+	Constructor
+)
+
+type OrderedEvent struct {
+	Order int
+	Keys  []int64
+	Data  []int64
+}
+
+type OrderedL2ToL1Message struct {
+	Order     int
+	ToAddress int64
+	Payload   []int64
+}
+
+func get_state_seelctor_execution_info(executionInfo []TransactionExecutionInfo, generalConfig *StarknetGeneralConfig) (*StateSelector, error) {
+	panic("Not implemented")
 }
 
 // ref: https://github.com/starkware-libs/cairo-lang/blob/v0.12.3/src/starkware/starknet/business_logic/transaction/state_objects.py#L37
